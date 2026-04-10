@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { popularServices } from "@/lib/mock-data";
+import { api } from "@/lib/api";
 import { ChevronLeft, Sparkles, Loader2, Check } from "lucide-react";
 import Link from "next/link";
 
@@ -32,6 +33,11 @@ export default function NewSubscriptionPage() {
   });
 
   useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
     setMounted(true);
     // Set default date to today + 30 days
     const nextMonth = new Date();
@@ -40,7 +46,7 @@ export default function NewSubscriptionPage() {
       ...prev,
       nextBillingDate: nextMonth.toISOString().split("T")[0],
     }));
-  }, []);
+  }, [router]);
 
   const handleNameChange = (value: string) => {
     setFormData((prev) => ({ ...prev, name: value }));
@@ -59,14 +65,19 @@ export default function NewSubscriptionPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // In real app, would call API here
-    console.log("Creating subscription:", formData);
-
-    setLoading(false);
-    router.push("/subscriptions");
+    try {
+      await api.createSubscription({
+        name: formData.name,
+        amount: parseInt(formData.amount),
+        billingCycle: formData.billingCycle,
+        nextBillingDate: new Date(formData.nextBillingDate).toISOString(),
+        category: formData.category,
+      });
+      router.push("/subscriptions");
+    } catch (error) {
+      console.error("Failed to create subscription:", error);
+      setLoading(false);
+    }
   };
 
   if (!mounted) {
