@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +43,7 @@ interface Subscription {
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -54,12 +55,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
     setMounted(true);
     fetchData();
-  }, [pathname]);
+  }, [router, pathname]);
 
   const fetchData = async () => {
     try {
