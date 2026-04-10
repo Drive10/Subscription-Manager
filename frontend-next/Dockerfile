@@ -31,5 +31,6 @@ EXPOSE ${PORT:-3000}
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://subkeeper_backend:3001}
 
 CMD ["node", "server.js"]

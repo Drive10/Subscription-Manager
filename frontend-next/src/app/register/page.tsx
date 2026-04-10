@@ -45,19 +45,14 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        // Fallback to mock for demo
-        localStorage.setItem("accessToken", "mock-token");
-        router.push("/dashboard");
-        return;
+        throw new Error(data.error?.message || data.message || "Registration failed");
       }
 
       localStorage.setItem("accessToken", data.data.accessToken);
       localStorage.setItem("refreshToken", data.data.refreshToken);
       router.push("/dashboard");
     } catch (err: any) {
-      // Demo fallback
-      localStorage.setItem("accessToken", "mock-token");
-      router.push("/dashboard");
+      setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
