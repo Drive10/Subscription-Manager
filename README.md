@@ -124,6 +124,100 @@ frontend-next/
 │   │   └── analytics/
 │   ├── components/ui/
 │   └── lib/
+
+deploy/
+├── deploy.sh             # Enhanced deployment script with --service option
+├── Dockerfile            # Multi-stage build for frontend/backend
+├── docker-compose.yml    # Profile-based service deployment
+├── nginx.conf            # Custom routing for Subscription-Manager
+├── .env                  # Environment variables template
+├── scripts/              # Supporting deployment scripts
+└── systemd/              # Systemd service templates
+```
+
+## Deployment Options
+
+The application supports flexible deployment options using the enhanced deployment system:
+
+### Local Development (Docker Compose)
+```bash
+cd deploy
+docker-compose up                    # Full stack deployment
+docker-compose --profile frontend up # Frontend only
+docker-compose --profile backend up  # Backend + database
+docker-compose --profile db up       # Database only
+```
+
+### Production Deployment (Using Enhanced Deploy Script)
+```bash
+cd deploy
+./deploy.sh                          # Full deployment (default)
+./deploy.sh --service frontend       # Frontend only
+./deploy.sh --service backend        # Backend + database
+./deploy.sh --service db             # Database only
+
+# With additional options
+./deploy.sh --service frontend --build    # Force rebuild
+./deploy.sh --service backend -e staging  # Deploy to staging
+./deploy.sh --service frontend -l         # Show logs after deploy
+```
+
+### Production Deployment (Using app-deploy Infrastructure)
+For Oracle Cloud deployment using the app-deploy infrastructure:
+
+1. Provision infrastructure using app-deploy's Terraform
+2. SSH to instance and run setup script
+3. Configure environment variables in `/etc/appdeploy/app.production.env`
+4. Deploy using the enhanced deploy script:
+   ```bash
+   sudo ./deploy.sh --service frontend   # Frontend only
+   sudo ./deploy.sh --service backend    # Backend + database
+   sudo ./deploy.sh                      # Full deployment
+   ```
+
+## Deployment Profiles
+
+The deployment system supports three profiles:
+- **frontend**: Deploys only the frontend (Next.js) application
+- **backend**: Deploys the backend (NestJS) API and database
+- **db**: Deploys only the database service
+
+This enables independent frontend deployment without impacting the production database.
+
+## Project Structure
+
+```
+backend-nest/
+├── src/
+│   ├── modules/
+│   │   ├── auth/
+│   │   ├── subscription/
+│   │   ├── analytics/
+│   │   ├── billing/
+│   │   ├── detection/
+│   │   └── reminder/
+│   └── prisma/
+│       └── schema.prisma
+
+frontend-next/
+├── src/
+│   ├── app/
+│   │   ├── login/
+│   │   ├── register/
+│   │   ├── dashboard/
+│   │   ├── subscriptions/
+│   │   └── analytics/
+│   ├── components/ui/
+│   └── lib/
+
+deploy/
+├── deploy.sh             # Enhanced deployment script with --service option
+├── Dockerfile            # Multi-stage build for frontend/backend
+├── docker-compose.yml    # Profile-based service deployment
+├── nginx.conf            # Custom routing for Subscription-Manager
+├── .env                  # Environment variables template
+├── scripts/              # Supporting deployment scripts
+└── systemd/              # Systemd service templates
 ```
 
 ## License

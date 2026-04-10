@@ -1,0 +1,26 @@
+[Unit]
+Description=App Deployment (%i)
+After=network-online.target docker.service
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=%h/%i/deploy
+Environment="PROJECT_NAME=%i"
+EnvironmentFile=-/etc/appdeploy/app.%i.env
+ExecStartPre=/usr/bin/docker-compose clean -p %i
+ExecStart=/usr/bin/docker-compose up -d --remove-orphans
+ExecStop=/usr/bin/docker-compose -p %i down
+TimeoutStartSec=300
+TimeoutStopSec=60
+
+Restart=on-failure
+RestartSec=10
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
