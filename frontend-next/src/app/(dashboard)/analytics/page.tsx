@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockMonthlySpending, mockCategorySpending, mockSubscriptions } from "@/lib/mock-data";
 import {
   BarChart,
   Bar,
@@ -19,12 +19,63 @@ import {
 } from "recharts";
 import { TrendingUp, TrendingDown, DollarSign, Calendar } from "lucide-react";
 
+interface Stats {
+  totalActive: number;
+  totalPaused: number;
+  totalCancelled: number;
+  totalExpired: number;
+}
+
+interface MonthlySpend {
+  month: string;
+  amount: number;
+}
+
+interface CategoryData {
+  category: string;
+  amount: number;
+  color?: string;
+}
+
+const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
+
 export default function AnalyticsPage() {
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [monthlySpending, setMonthlySpending] = useState<MonthlySpend[]>([]);
+  const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
 
   useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
     setMounted(true);
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const [statsData, monthlyData, categoryDataResult] = await Promise.all([
+        api.getStats(),
+        api.getAnalytics(),
+        api.getCategoryBreakdown(),
+      ]);
+      setStats(statsData);
+      setMonthlySpending(monthlyData);
+      setCategoryData(categoryDataResult.map((c: any, i: number) => ({
+        category: c.category || "Other",
+        amount: c.amount || 0,
+        color: COLORS[i % COLORS.length],
+      })));
+    } catch (error) {
+      console.error("Failed to fetch analytics:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!mounted) {
     return (
@@ -39,16 +90,18 @@ export default function AnalyticsPage() {
     );
   }
 
-  const totalMonthly = mockSubscriptions
-    .filter((s) => s.status === "active")
-    .reduce((total, sub) => {
-      return total + (sub.billingCycle === "monthly" ? sub.amount : sub.amount / 12);
-    }, 0);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
+  const totalMonthly = monthlySpending.reduce((sum, m) => sum + m.amount, 0) / Math.max(monthlySpending.length, 1);
   const totalYearly = totalMonthly * 12;
-  const avgMonthly = totalMonthly;
-  const lastMonthSpending = mockMonthlySpending[mockMonthlySpending.length - 1].amount;
-  const percentChange = ((totalMonthly - lastMonthSpending) / lastMonthSpending) * 100;
+  const lastMonthSpending = monthlySpending.length > 0 ? monthlySpending[monthlySpending.length - 1].amount : 0;
+  const percentChange = lastMonthSpending > 0 ? ((totalMonthly - lastMonthSpending) / lastMonthSpending) * 100 : 0;
 
   return (
     <div className="space-y-8">
@@ -68,7 +121,7 @@ export default function AnalyticsPage() {
             <DollarSign className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{avgMonthly.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{Math.round(totalMonthly).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">Current month</p>
           </CardContent>
         </Card>
@@ -81,7 +134,7 @@ export default function AnalyticsPage() {
             <Calendar className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{totalYearly.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{Math.round(totalYearly).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">Projected annual</p>
           </CardContent>
         </Card>
@@ -116,7 +169,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockSubscriptions.filter((s) => s.status === "active").length}
+              {stats?.totalActive || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Subscriptions</p>
           </CardContent>
@@ -133,7 +186,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockMonthlySpending}>
+                <BarChart data={monthlySpending}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="month" className="text-xs" />
                   <YAxis className="text-xs" tickFormatter={(v) => `₹${v}`} />
@@ -160,7 +213,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockMonthlySpending}>
+                <LineChart data={monthlySpending}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="month" className="text-xs" />
                   <YAxis className="text-xs" tickFormatter={(v) => `₹${v}`} />
@@ -195,7 +248,7 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={mockCategorySpending}
+                    data={categoryData}
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
@@ -206,8 +259,8 @@ export default function AnalyticsPage() {
                       `${category} ${(percent * 100).toFixed(0)}%`
                     }
                   >
-                    {mockCategorySpending.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -231,15 +284,16 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {mockCategorySpending
+              {categoryData
                 .sort((a, b) => b.amount - a.amount)
                 .map((cat, index) => {
-                  const percentage = (cat.amount / mockCategorySpending.reduce((t, c) => t + c.amount, 0)) * 100;
+                  const total = categoryData.reduce((t, c) => t + c.amount, 0);
+                  const percentage = total > 0 ? (cat.amount / total) * 100 : 0;
                   return (
                     <div key={cat.category} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                           <span className="font-medium">{cat.category}</span>
                         </div>
                         <span className="font-bold">₹{cat.amount.toLocaleString()}</span>
@@ -247,7 +301,7 @@ export default function AnalyticsPage() {
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
-                          style={{ width: `${percentage}%`, backgroundColor: cat.color }}
+                          style={{ width: `${percentage}%`, backgroundColor: COLORS[index % COLORS.length] }}
                         />
                       </div>
                     </div>

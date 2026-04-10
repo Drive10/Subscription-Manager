@@ -1,198 +1,90 @@
-const getApiBaseUrl = () => {
+const getApiUrl = () => {
   if (typeof window !== "undefined") {
     return `${window.location.protocol}//${window.location.hostname}:3001/api/v1`;
   }
-  return process.env.NEXT_PUBLIC_API_URL
-    ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
-    : "http://localhost:3001/api/v1";
+  return "http://localhost:3001/api/v1";
 };
 
-const API_URL = getApiBaseUrl();
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("accessToken");
+  }
+  return null;
+};
 
 const getHeaders = (): Record<string, string> => {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  const token = getToken();
   if (token) {
     return { Authorization: `Bearer ${token}` };
   }
   return {};
 };
 
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const error = await res
-      .json()
-      .catch(() => ({ error: { message: "Request failed" } }));
-    throw new Error(error.error?.message || "Request failed");
-  }
-  return res.json();
-}
+export const api = {
+  getDashboard: async () => {
+    const res = await fetch(`${getApiUrl()}/dashboard`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch dashboard");
+    const json = await res.json();
+    return json.data;
+  },
 
-export const auth = {
-  register: async (email: string, password: string) => {
-    const res = await fetch(`${API_URL}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    return handleResponse<{
-      accessToken: string;
-      refreshToken: string;
-      user: { id: string; email: string };
-    }>(res);
-  },
-  login: async (email: string, password: string) => {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    return handleResponse<{
-      accessToken: string;
-      refreshToken: string;
-      user: { id: string; email: string };
-    }>(res);
-  },
-  me: async () => {
-    const res = await fetch(`${API_URL}/auth/me`, { headers: getHeaders() });
-    return handleResponse<{ id: string; email: string }>(res);
-  },
-  logout: async () => {
-    const res = await fetch(`${API_URL}/auth/logout`, {
-      method: "POST",
-      headers: { ...getHeaders(), "Content-Type": "application/json" },
-    });
-    return handleResponse<{ message: string }>(res);
-  },
-};
-
-export const subscriptions = {
-  getAll: async (params?: { status?: string; category?: string }) => {
+  getSubscriptions: async (params?: { status?: string; category?: string }) => {
     const query = params
       ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
       : "";
-    const res = await fetch(`${API_URL}/subscriptions${query}`, {
+    const res = await fetch(`${getApiUrl()}/subscriptions${query}`, {
       headers: getHeaders(),
     });
-    return handleResponse<any[]>(res);
+    if (!res.ok) throw new Error("Failed to fetch subscriptions");
+    const json = await res.json();
+    return json.data;
   },
-  getById: async (id: string) => {
-    const res = await fetch(`${API_URL}/subscriptions/${id}`, {
-      headers: getHeaders(),
-    });
-    return handleResponse<any>(res);
-  },
-  create: async (data: {
+
+  createSubscription: async (data: {
     name: string;
     amount: number;
     billingCycle: string;
     nextBillingDate: string;
-    currency?: string;
     category?: string;
   }) => {
-    const res = await fetch(`${API_URL}/subscriptions`, {
+    const res = await fetch(`${getApiUrl()}/subscriptions`, {
       method: "POST",
       headers: { ...getHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    return handleResponse<any>(res);
+    if (!res.ok) throw new Error("Failed to create subscription");
+    const json = await res.json();
+    return json.data;
   },
-  update: async (
-    id: string,
-    data: Partial<{ name: string; amount: number; status: string }>,
-  ) => {
-    const res = await fetch(`${API_URL}/subscriptions/${id}`, {
-      method: "PATCH",
-      headers: { ...getHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return handleResponse<any>(res);
-  },
-  delete: async (id: string) => {
-    const res = await fetch(`${API_URL}/subscriptions/${id}`, {
-      method: "DELETE",
+
+  getAnalytics: async () => {
+    const res = await fetch(`${getApiUrl()}/analytics/monthly-spend?months=6`, {
       headers: getHeaders(),
     });
-    return handleResponse<void>(res);
+    if (!res.ok) throw new Error("Failed to fetch analytics");
+    const json = await res.json();
+    return json.data;
   },
-  pause: async (id: string) => {
-    const res = await fetch(`${API_URL}/subscriptions/${id}/pause`, {
-      method: "POST",
+
+  getCategoryBreakdown: async () => {
+    const res = await fetch(`${getApiUrl()}/analytics/category-wise`, {
       headers: getHeaders(),
     });
-    return handleResponse<any>(res);
+    if (!res.ok) throw new Error("Failed to fetch category breakdown");
+    const json = await res.json();
+    return json.data;
   },
-  resume: async (id: string) => {
-    const res = await fetch(`${API_URL}/subscriptions/${id}/resume`, {
-      method: "POST",
+
+  getStats: async () => {
+    const res = await fetch(`${getApiUrl()}/analytics/subscription-stats`, {
       headers: getHeaders(),
     });
-    return handleResponse<any>(res);
-  },
-  upcoming: async (days = 7) => {
-    const res = await fetch(`${API_URL}/subscriptions/upcoming?days=${days}`, {
-      headers: getHeaders(),
-    });
-    return handleResponse<any[]>(res);
+    if (!res.ok) throw new Error("Failed to fetch stats");
+    const json = await res.json();
+    return json.data;
   },
 };
 
-export const analytics = {
-  monthlySpend: async (months = 6) => {
-    const res = await fetch(
-      `${API_URL}/analytics/monthly-spend?months=${months}`,
-      { headers: getHeaders() },
-    );
-    return handleResponse<any[]>(res);
-  },
-  categoryBreakdown: async () => {
-    const res = await fetch(`${API_URL}/analytics/category-breakdown`, {
-      headers: getHeaders(),
-    });
-    return handleResponse<any[]>(res);
-  },
-  subscriptionStats: async () => {
-    const res = await fetch(`${API_URL}/analytics/subscription-stats`, {
-      headers: getHeaders(),
-    });
-    return handleResponse<{ totalActive: number; totalPaused: number }>(res);
-  },
-  totalMonthlySpend: async () => {
-    const res = await fetch(`${API_URL}/analytics/total-monthly-spend`, {
-      headers: getHeaders(),
-    });
-    return handleResponse<{ total: number; currency: string }>(res);
-  },
-};
-
-export const detection = {
-  detectSms: async (text: string) => {
-    const res = await fetch(`${API_URL}/detect/sms`, {
-      method: "POST",
-      headers: { ...getHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    return handleResponse<any>(res);
-  },
-  confirm: async (
-    detectionLogId: string,
-    confirmed: boolean,
-    data?: { name: string; amount: number; billingCycle?: string },
-  ) => {
-    const res = await fetch(`${API_URL}/detect/confirm`, {
-      method: "POST",
-      headers: { ...getHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify({ detectionLogId, confirmed, ...data }),
-    });
-    return handleResponse<{ message: string }>(res);
-  },
-  getLogs: async (status?: string) => {
-    const query = status ? `?status=${status}` : "";
-    const res = await fetch(`${API_URL}/detect/logs${query}`, {
-      headers: getHeaders(),
-    });
-    return handleResponse<any[]>(res);
-  },
-};
-
-export default { auth, subscriptions, analytics, detection };
+export default api;

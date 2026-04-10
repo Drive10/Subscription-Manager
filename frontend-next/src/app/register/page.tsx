@@ -33,14 +33,12 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/v1/auth/register`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/v1/auth/register`;
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
       const data = await res.json();
 
@@ -50,7 +48,7 @@ export default function RegisterPage() {
 
       localStorage.setItem("accessToken", data.data.accessToken);
       localStorage.setItem("refreshToken", data.data.refreshToken);
-      router.push("/dashboard");
+      router.push("/login");
     } catch (err: any) {
       setError(err.message || "Registration failed");
     } finally {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { mockSubscriptions, Subscription } from "@/lib/mock-data";
+import { api } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,24 +26,53 @@ import {
   Play,
 } from "lucide-react";
 
+interface Subscription {
+  id: string;
+  name: string;
+  amount: number;
+  currency: string;
+  billingCycle: string;
+  nextBillingDate: string;
+  category: string;
+  status: string;
+}
+
 type SortOption = "price-asc" | "price-desc" | "date-asc" | "date-desc" | "name";
 type FilterOption = "all" | "monthly" | "yearly" | "active" | "paused";
 
 export default function SubscriptionsPage() {
   const [mounted, setMounted] = useState(false);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
   const [filterBy, setFilterBy] = useState<FilterOption>("all");
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
 
   useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
     setMounted(true);
+    fetchSubscriptions();
   }, []);
 
-  const filteredAndSortedSubscriptions = useMemo(() => {
-    let result = [...mockSubscriptions];
+  const fetchSubscriptions = async () => {
+    try {
+      const data = await api.getSubscriptions();
+      setSubscriptions(data);
+    } catch (error) {
+      console.error("Failed to fetch subscriptions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Filter
+  const filteredAndSortedSubscriptions = useMemo(() => {
+    let result = [...subscriptions];
+
     if (filterBy !== "all") {
       switch (filterBy) {
         case "monthly":
@@ -61,17 +90,15 @@ export default function SubscriptionsPage() {
       }
     }
 
-    // Search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (s) =>
           s.name.toLowerCase().includes(query) ||
-          s.category.toLowerCase().includes(query)
+          (s.category && s.category.toLowerCase().includes(query))
       );
     }
 
-    // Sort
     result.sort((a, b) => {
       switch (sortBy) {
         case "price-asc":
@@ -90,11 +117,13 @@ export default function SubscriptionsPage() {
     });
 
     return result;
-  }, [searchQuery, sortBy, filterBy]);
+  }, [subscriptions, searchQuery, sortBy, filterBy]);
 
   const getMonthlyAmount = (sub: Subscription) => {
     return sub.billingCycle === "monthly" ? sub.amount : Math.round(sub.amount / 12);
   };
+
+  const getLogo = (name: string) => name.charAt(0).toUpperCase();
 
   if (!mounted) {
     return (
@@ -109,6 +138,14 @@ export default function SubscriptionsPage() {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -116,7 +153,7 @@ export default function SubscriptionsPage() {
         <div>
           <h1 className="text-3xl font-bold">Subscriptions</h1>
           <p className="text-muted-foreground">
-            Manage your {mockSubscriptions.length} subscriptions
+            Manage your {subscriptions.length} subscriptions
           </p>
         </div>
         <Link href="/subscriptions/new">
@@ -182,11 +219,11 @@ export default function SubscriptionsPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-bold text-lg">
-                      {sub.logo}
+                      {getLogo(sub.name)}
                     </div>
                     <div>
                       <h3 className="font-semibold">{sub.name}</h3>
-                      <p className="text-sm text-muted-foreground">{sub.category}</p>
+                      <p className="text-sm text-muted-foreground">{sub.category || "Other"}</p>
                     </div>
                   </div>
                   <div className="relative">

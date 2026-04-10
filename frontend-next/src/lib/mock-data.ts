@@ -1,3 +1,7 @@
+export const USE_MOCK_DATA = process.env.NODE_ENV !== "production";
+
+export const isDev = () => process.env.NODE_ENV !== "production";
+
 export interface Subscription {
   id: string;
   name: string;

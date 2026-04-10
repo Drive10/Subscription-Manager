@@ -21,24 +21,16 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/v1/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/v1/auth/login`;
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
-        // Fallback to mock login for demo
-        if (email === "demo@example.com" && password === "password123") {
-          localStorage.setItem("accessToken", "mock-token");
-          router.push("/dashboard");
-          return;
-        }
         throw new Error(data.error?.message || "Login failed");
       }
 
@@ -46,12 +38,6 @@ export default function LoginPage() {
       localStorage.setItem("refreshToken", data.data.refreshToken);
       router.push("/dashboard");
     } catch (err: any) {
-      // Demo fallback
-      if (email === "demo@example.com" && password === "password123") {
-        localStorage.setItem("accessToken", "mock-token");
-        router.push("/dashboard");
-        return;
-      }
       setError(err.message || "Invalid credentials");
     } finally {
       setLoading(false);
