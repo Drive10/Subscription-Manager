@@ -63,7 +63,7 @@ export class DetectionService {
     if (amount) confidence += 40;
     if (name) confidence += 30;
 
-    const parsed: ParsedData = {
+    const parsed = {
       name,
       amount,
       currency,
