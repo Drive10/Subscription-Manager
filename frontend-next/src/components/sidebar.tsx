@@ -38,13 +38,39 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>("");
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token && pathname !== "/login" && pathname !== "/register") {
       router.push("/login");
+      return;
+    }
+    
+    // Decode JWT to get email
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setUserEmail(payload.email || "");
+      } catch {
+        setUserEmail("");
+      }
     }
   }, [pathname, router]);
+
+  const getUserInitial = () => {
+    if (userEmail) {
+      return userEmail.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
+  const getUserName = () => {
+    if (userEmail) {
+      return userEmail.split("@")[0];
+    }
+    return "User";
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -117,11 +143,11 @@ export function Sidebar({ className }: SidebarProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center">
-                  <span className="text-white text-xs font-medium">U</span>
+                  <span className="text-white text-xs font-medium">{getUserInitial()}</span>
                 </div>
                 <div className="text-sm">
-                  <p className="font-medium">User</p>
-                  <p className="text-muted-foreground text-xs">demo@example.com</p>
+                  <p className="font-medium">{getUserName()}</p>
+                  <p className="text-muted-foreground text-xs">{userEmail}</p>
                 </div>
               </div>
               <button
