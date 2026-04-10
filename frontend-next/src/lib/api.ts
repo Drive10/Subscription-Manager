@@ -1,9 +1,12 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
-const getHeaders = () => {
+const getHeaders = (): Record<string, string> => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
 };
 
 async function handleResponse<T>(res: Response): Promise<T> {
