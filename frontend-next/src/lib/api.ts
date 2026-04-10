@@ -67,7 +67,7 @@ export const api = {
   },
 
   getAnalytics: async () => {
-    const res = await fetch(`${getApiUrl()}/analytics/monthly-spend?months=6`, {
+    const res = await fetch(`${getApiUrl()}/analytics/monthly-trend`, {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error("Failed to fetch analytics");
@@ -85,7 +85,7 @@ export const api = {
   },
 
   getStats: async () => {
-    const res = await fetch(`${getApiUrl()}/analytics/subscription-stats`, {
+    const res = await fetch(`${getApiUrl()}/dashboard`, {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error("Failed to fetch stats");
