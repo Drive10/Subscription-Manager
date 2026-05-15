@@ -5,6 +5,7 @@ import {
   VersioningType,
 } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import helmet from "helmet";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
 import { AppModule } from "./app.module";
@@ -12,6 +13,9 @@ import { AppModule } from "./app.module";
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
   const app = await NestFactory.create(AppModule);
+
+  // Security headers
+  app.use(helmet());
 
   // API prefix
   app.setGlobalPrefix("api");
@@ -23,8 +27,11 @@ async function bootstrap() {
   });
 
   // CORS configuration
+  const corsOrigin = process.env.CORS_ORIGIN;
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || "*",
+    origin: corsOrigin
+      ? corsOrigin.split(",").map((o) => o.trim())
+      : ["http://localhost:3000", "http://subkeeper_frontend:3000"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
   });

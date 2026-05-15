@@ -1,50 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
+  PieChart, Pie, Cell, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
-import { Plus, ArrowRight, TrendingUp, AlertTriangle, Calendar } from "lucide-react";
-
-interface DashboardData {
-  totalSubscriptions: number;
-  totalMonthlySpending: number;
-  totalYearlySpending: number;
-  upcomingRenewals: Subscription[];
-  topExpensiveSubscriptions: Subscription[];
-}
-
-interface Subscription {
-  id: string;
-  name: string;
-  amount: number;
-  currency: string;
-  billingCycle: string;
-  nextBillingDate: string;
-  category: string;
-  status: string;
-}
+import { Plus, ArrowRight } from "lucide-react";
+import type { DashboardData, Subscription } from "@/lib/types";
 
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
@@ -53,20 +24,12 @@ export default function DashboardPage() {
   const [categorySpending, setCategorySpending] = useState<{ category: string; amount: number; color: string }[]>([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
     setMounted(true);
     fetchData();
-
-    const handleFocus = () => {
-      fetchData();
-    };
+    const handleFocus = () => fetchData();
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
-  }, [router, pathname]);
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -78,8 +41,8 @@ export default function DashboardPage() {
       ]);
       setData(dashboardData);
       setSubscriptions(subs);
-      setMonthlySpending(analytics);
-      setCategorySpending(categories.map((c: any, i: number) => ({
+      setMonthlySpending(analytics as { month: string; amount: number }[]);
+      setCategorySpending((categories as any[]).map((c: any, i: number) => ({
         category: c.category || "Other",
         amount: c.amount || 0,
         color: COLORS[i % COLORS.length],

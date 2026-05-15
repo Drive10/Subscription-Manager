@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,41 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Search,
-  Plus,
-  Filter,
-  ArrowUpDown,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Pause,
-  Play,
+  Search, Plus, Filter, ArrowUpDown, MoreVertical, Pencil, Trash2, Pause, Play,
 } from "lucide-react";
-
-interface Subscription {
-  id: string;
-  name: string;
-  amount: number;
-  currency: string;
-  billingCycle: string;
-  nextBillingDate: string;
-  category: string;
-  status: string;
-}
+import type { Subscription } from "@/lib/types";
 
 type SortOption = "price-asc" | "price-desc" | "date-asc" | "date-desc" | "name";
 type FilterOption = "all" | "monthly" | "yearly" | "active" | "paused";
 
 export default function SubscriptionsPage() {
   const router = useRouter();
-  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,14 +30,9 @@ export default function SubscriptionsPage() {
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
     setMounted(true);
     fetchSubscriptions();
-  }, [router, pathname]);
+  }, []);
 
   const fetchSubscriptions = async () => {
     try {

@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
-import { SubscriptionStatus } from "./subscription.dto";
+import { SubscriptionStatusValues } from "./subscription.dto";
 
 @Injectable()
 export class SubscriptionService {
@@ -8,7 +8,7 @@ export class SubscriptionService {
 
   async create(userId: string, dto: any) {
     if (new Date(dto.nextBillingDate) < new Date()) {
-      throw new Error("Next billing date must be in the future");
+      throw new BadRequestException("Next billing date must be in the future");
     }
 
     return this.prisma.subscription.create({

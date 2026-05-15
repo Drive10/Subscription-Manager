@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  NotFoundException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
@@ -99,6 +100,7 @@ export class AuthService {
       where: { id: userId },
       select: { id: true, email: true },
     });
+    if (!user) throw new NotFoundException("User not found");
     return user;
   }
 

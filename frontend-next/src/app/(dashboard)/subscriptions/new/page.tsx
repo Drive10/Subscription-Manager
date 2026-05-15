@@ -7,11 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { popularServices } from "@/lib/mock-data";
 import { api } from "@/lib/api";
@@ -33,20 +29,14 @@ export default function NewSubscriptionPage() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
     setMounted(true);
-    // Set default date to today + 30 days
     const nextMonth = new Date();
     nextMonth.setDate(nextMonth.getDate() + 30);
     setFormData((prev) => ({
       ...prev,
       nextBillingDate: nextMonth.toISOString().split("T")[0],
     }));
-  }, [router]);
+  }, []);
 
   const handleNameChange = (value: string) => {
     setFormData((prev) => ({ ...prev, name: value }));

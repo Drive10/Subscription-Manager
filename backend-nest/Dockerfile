@@ -21,7 +21,7 @@ RUN apk add --no-cache libssl3
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma/client /app/node_modules/@prisma/client

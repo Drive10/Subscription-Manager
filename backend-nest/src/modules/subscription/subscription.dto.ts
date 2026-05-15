@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsDateString,
   IsEnum,
+  Min,
 } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
@@ -12,15 +13,15 @@ export const BillingCycle = {
   YEARLY: "yearly",
 } as const;
 
-export const SubscriptionStatus = {
+export const SubscriptionStatusValues = {
   ACTIVE: "active",
   CANCELLED: "cancelled",
   PAUSED: "paused",
   EXPIRED: "expired",
 } as const;
 
-export type BillingCycleType = typeof BillingCycle[keyof typeof BillingCycle];
-export type SubscriptionStatusType = typeof SubscriptionStatus[keyof typeof SubscriptionStatus];
+export type BillingCycleType = (typeof BillingCycle)[keyof typeof BillingCycle];
+export type SubscriptionStatusType = (typeof SubscriptionStatusValues)[keyof typeof SubscriptionStatusValues];
 
 export class CreateSubscriptionDto {
   @ApiProperty()
@@ -29,15 +30,16 @@ export class CreateSubscriptionDto {
 
   @ApiProperty()
   @IsNumber()
+  @Min(1)
   amount: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ default: "INR" })
   @IsOptional()
   @IsString()
   currency?: string;
 
   @ApiProperty({ enum: Object.values(BillingCycle) })
-  @IsString()
+  @IsEnum(BillingCycle)
   billingCycle: string;
 
   @ApiProperty()
@@ -59,11 +61,12 @@ export class UpdateSubscriptionDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
+  @Min(1)
   amount?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(BillingCycle) })
   @IsOptional()
-  @IsString()
+  @IsEnum(BillingCycle)
   billingCycle?: string;
 
   @ApiPropertyOptional()
@@ -76,9 +79,9 @@ export class UpdateSubscriptionDto {
   @IsString()
   category?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(SubscriptionStatusValues) })
   @IsOptional()
-  @IsString()
+  @IsEnum(SubscriptionStatusValues)
   status?: string;
 }
 

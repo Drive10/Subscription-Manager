@@ -5,27 +5,11 @@ import { useRouter, usePathname } from "next/navigation";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  CartesianGrid,
-  PieChart,
-  Pie,
-  Cell,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  LineChart, Line, CartesianGrid, PieChart, Pie, Cell,
 } from "recharts";
 import { TrendingUp, TrendingDown, DollarSign, Calendar } from "lucide-react";
-
-interface Stats {
-  totalActive: number;
-  totalPaused: number;
-  totalCancelled: number;
-  totalExpired: number;
-}
+import type { Subscription } from "@/lib/types";
 
 interface MonthlySpend {
   month: string;
@@ -41,34 +25,27 @@ interface CategoryData {
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
 export default function AnalyticsPage() {
-  const router = useRouter();
-  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [monthlySpending, setMonthlySpending] = useState<MonthlySpend[]>([]);
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
     setMounted(true);
     fetchData();
-  }, [router, pathname]);
+  }, []);
 
   const fetchData = async () => {
     try {
-      const [statsData, monthlyData, categoryDataResult] = await Promise.all([
-        api.getStats(),
+      const [subs, monthlyData, categoryDataResult] = await Promise.all([
+        api.getSubscriptions(),
         api.getAnalytics(),
         api.getCategoryBreakdown(),
       ]);
-      setStats(statsData);
-      setMonthlySpending(monthlyData);
-      setCategoryData(categoryDataResult.map((c: any, i: number) => ({
+      setSubscriptions(subs);
+      setMonthlySpending(monthlyData as MonthlySpend[]);
+      setCategoryData((categoryDataResult as any[]).map((c: any, i: number) => ({
         category: c.category || "Other",
         amount: c.amount || 0,
         color: COLORS[i % COLORS.length],
@@ -172,7 +149,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {stats?.totalActive || 0}
+              {subscriptions.filter((s) => s.status === "active").length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Subscriptions</p>
           </CardContent>

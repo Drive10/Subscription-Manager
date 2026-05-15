@@ -1,31 +1,17 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
-
-interface Subscription {
-  id: string;
-  name: string;
-  amount: number;
-  currency: string;
-  billingCycle: string;
-  nextBillingDate: string;
-  category: string;
-  status: string;
-}
+import type { Subscription } from "@/lib/types";
 
 export default function EditSubscriptionPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -43,13 +29,8 @@ export default function EditSubscriptionPage({ params }: { params: Promise<{ id:
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
     fetchSubscription();
-  }, [router, resolvedParams.id]);
+  }, [resolvedParams.id]);
 
   const fetchSubscription = async () => {
     try {
