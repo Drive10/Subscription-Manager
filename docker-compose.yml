@@ -40,6 +40,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-subscription_manager}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./seed.sql:/docker-entrypoint-initdb.d/01-seed.sql
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-subscription}"]
