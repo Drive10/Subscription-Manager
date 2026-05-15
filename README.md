@@ -1,225 +1,229 @@
-# SubSense - Subscription Manager
+# SubKeep — Subscription Manager
 
-A full-stack subscription tracking application built with NestJS (backend) and Next.js 14 (frontend).
+[![CI](https://github.com/Drive10/subkeeper/actions/workflows/ci.yml/badge.svg)](https://github.com/Drive10/subkeeper/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![NestJS](https://img.shields.io/badge/Backend-NestJS-ea2845)](https://nestjs.com)
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js_14-000000)](https://nextjs.org)
+[![Prisma](https://img.shields.io/badge/ORM-Prisma-2d3748)](https://prisma.io)
+[![PostgreSQL](https://img.shields.io/badge/DB-PostgreSQL-336791)](https://postgresql.org)
+
+Track, manage, and optimize all your subscriptions in one place. Get reminders, smart insights, and take control of your spending.
+
+![Dashboard](./docs/dashboard.png)
 
 ## Tech Stack
 
-- **Backend**: NestJS, Prisma, PostgreSQL, JWT Auth
-- **Frontend**: Next.js 14 (App Router), Tailwind CSS, ShadCN UI, Recharts
+| Layer          | Technology                                     |
+| -------------- | ---------------------------------------------- |
+| **Backend**    | NestJS 10, TypeScript, Passport JWT            |
+| **Frontend**   | Next.js 14 (App Router), Tailwind CSS, Recharts|
+| **Database**   | PostgreSQL 15, Prisma ORM                      |
+| **Auth**       | JWT (access + refresh tokens)                  |
+| **Testing**    | Jest (backend), Playwright (frontend E2E)      |
+| **Deploy**     | Docker Compose                                 |
+
+## Features
+
+- **Dashboard** — Monthly/yearly spend, upcoming renewals, spending trends, category breakdown
+- **Subscription CRUD** — Create, read, update, pause, resume, delete subscriptions
+- **Analytics** — Category-wise spending, monthly spending trend, top categories
+- **Authentication** — Register, login, JWT-based session management
+- **Reminders** — Upcoming renewal notifications
+- **SMS Detection** — Auto-detect subscriptions from SMS text
+- **Payments** — Track payment history per subscription
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js 18+
-- PostgreSQL database
-
-### Database Setup
-
-1. Create a PostgreSQL database:
-
-```sql
-CREATE DATABASE subscription_manager;
-```
-
-2. Update the connection string in `backend-nest/.env`:
-
-```
-DATABASE_URL="postgresql://postgres:your_password@localhost:5432/subscription_manager"
-```
-
-3. Run migrations:
+### Quick Start (Docker)
 
 ```bash
-cd backend-nest
-npx prisma migrate dev --name init
+docker compose up -d
 ```
 
-### Backend Setup
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:3001/api/v1
+- API Docs (Swagger): http://localhost:3001/api/docs
+
+### Local Development
+
+#### Prerequisites
+
+- Node.js 20+
+- PostgreSQL 15
+- npm
+
+#### Database
+
+```bash
+createdb subscription_manager
+
+cd backend-nest
+cp .env.example .env   # edit DATABASE_URL
+npx prisma migrate dev --name init
+npm run db:seed        # creates demo user + subscriptions
+```
+
+#### Backend
 
 ```bash
 cd backend-nest
 npm install
-npm run start:dev
+npm run start:dev     # http://localhost:3001
 ```
 
-API runs at `http://localhost:3001/api`
-
-### Frontend Setup
+#### Frontend
 
 ```bash
 cd frontend-next
 npm install
-npm run dev
+npm run dev           # http://localhost:3000
 ```
 
-Frontend runs at `http://localhost:3000`
+### Demo Credentials
+
+```
+Email:    demo@example.com
+Password: password123
+```
 
 ## API Endpoints
 
+All endpoints are prefixed with `/api/v1` and require `Authorization: Bearer <token>` except auth routes.
+
 ### Auth
 
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user
-- `POST /api/auth/logout` - User logout
+| Method | Path               | Description          |
+| ------ | ------------------ | -------------------- |
+| POST   | `/auth/register`   | Register new user    |
+| POST   | `/auth/login`      | User login           |
+| POST   | `/auth/refresh`    | Refresh access token |
+
+### Dashboard
+
+| Method | Path         | Description                        |
+| ------ | ------------ | ---------------------------------- |
+| GET    | `/dashboard` | Stats, spending, renewals, top subs|
 
 ### Subscriptions
 
-- `GET /api/subscriptions` - List subscriptions
-- `POST /api/subscriptions` - Create subscription
-- `GET /api/subscriptions/:id` - Get subscription
-- `PATCH /api/subscriptions/:id` - Update subscription
-- `DELETE /api/subscriptions/:id` - Delete subscription
-- `POST /api/subscriptions/:id/pause` - Pause subscription
-- `POST /api/subscriptions/:id/resume` - Resume subscription
-- `GET /api/subscriptions/upcoming` - Upcoming renewals
+| Method | Path                         | Description              |
+| ------ | ---------------------------- | ------------------------ |
+| GET    | `/subscriptions`             | List (supports filters)  |
+| POST   | `/subscriptions`             | Create                   |
+| GET    | `/subscriptions/:id`         | Get by ID                |
+| PATCH  | `/subscriptions/:id`         | Update                   |
+| DELETE | `/subscriptions/:id`         | Delete                   |
+| POST   | `/subscriptions/:id/pause`   | Pause                    |
+| POST   | `/subscriptions/:id/resume`  | Resume                   |
+| GET    | `/subscriptions/upcoming`    | Upcoming renewals        |
 
 ### Analytics
 
-- `GET /api/analytics/monthly-spend` - Monthly spend
-- `GET /api/analytics/category-breakdown` - Category breakdown
-- `GET /api/analytics/subscription-stats` - Subscription stats
-- `GET /api/analytics/total-monthly-spend` - Total monthly spend
+| Method | Path                          | Description                   |
+| ------ | ----------------------------- | ----------------------------- |
+| GET    | `/analytics/category-wise`    | Spending grouped by category  |
+| GET    | `/analytics/monthly-trend`    | Monthly spending trend (6 mo) |
 
-### Payments
+### Payments / Detection / Reminders
 
-- `GET /api/payments` - List payments
-- `POST /api/payments` - Create payment
-
-### Detection
-
-- `POST /api/detect/sms` - Detect from SMS
-- `POST /api/detect/confirm` - Confirm detection
-- `GET /api/detect/logs` - Get detection logs
-
-### Reminders
-
-- `GET /api/reminders/:subscriptionId` - Get reminders
-- `POST /api/reminders` - Create reminder
-- `DELETE /api/reminders/:id` - Cancel reminder
+See Swagger docs at `/api/docs` for the full API reference.
 
 ## Project Structure
 
 ```
-backend-nest/
-├── src/
-│   ├── modules/
-│   │   ├── auth/
-│   │   ├── subscription/
-│   │   ├── analytics/
-│   │   ├── billing/
-│   │   ├── detection/
-│   │   └── reminder/
-│   └── prisma/
-│       └── schema.prisma
-
-frontend-next/
-├── src/
-│   ├── app/
-│   │   ├── login/
-│   │   ├── register/
-│   │   ├── dashboard/
-│   │   ├── subscriptions/
-│   │   └── analytics/
-│   ├── components/ui/
-│   └── lib/
-
-deploy/
-├── deploy.sh             # Enhanced deployment script with --service option
-├── Dockerfile            # Multi-stage build for frontend/backend
-├── docker-compose.yml    # Profile-based service deployment
-├── nginx.conf            # Custom routing for Subscription-Manager
-├── .env                  # Environment variables template
-├── scripts/              # Supporting deployment scripts
-└── systemd/              # Systemd service templates
+subkeeper/
+├── backend-nest/                 # NestJS API
+│   ├── prisma/
+│   │   └── schema.prisma         # Database models
+│   ├── src/
+│   │   ├── modules/
+│   │   │   ├── auth/             # JWT auth, register, login
+│   │   │   ├── subscription/     # CRUD + pause/resume
+│   │   │   ├── dashboard/        # Aggregated dashboard data
+│   │   │   ├── analytics/        # Category & monthly trend
+│   │   │   ├── billing/          # Payments
+│   │   │   ├── detection/        # SMS-based detection
+│   │   │   ├── notification/     # Renewal reminders
+│   │   │   └── reminder/         # Reminder system
+│   │   ├── prisma/               # Prisma service (global)
+│   │   └── common/               # Filters, interceptors
+│   └── jest.config.ts
+│
+├── frontend-next/                # Next.js 14 App Router
+│   ├── src/app/
+│   │   ├── (dashboard)/          # Auth-gated routes
+│   │   │   ├── dashboard/        # Main dashboard page
+│   │   │   ├── analytics/        # Analytics page
+│   │   │   ├── subscriptions/    # List, new, edit
+│   │   │   └── settings/         # User settings
+│   │   ├── login/                # Login page
+│   │   └── register/             # Register page
+│   ├── src/components/           # UI components (ShadCN)
+│   ├── src/lib/
+│   │   ├── api.ts                # API client
+│   │   └── types.ts              # TypeScript interfaces
+│   ├── tests/                    # Playwright E2E tests
+│   └── playwright.config.ts
+│
+├── docker-compose.yml            # Production stack
+├── seed.sql                      # DB seed for Docker
+└── .github/                      # CI, issue/PR templates
 ```
 
-## Deployment Options
+## Testing
 
-The application supports flexible deployment options using the enhanced deployment system:
+### Backend (Jest)
 
-### Local Development (Docker Compose)
 ```bash
-cd deploy
-docker-compose up                    # Full stack deployment
-docker-compose --profile frontend up # Frontend only
-docker-compose --profile backend up  # Backend + database
-docker-compose --profile db up       # Database only
+cd backend-nest
+npm test                 # Run all unit tests
+npm run test:watch       # Watch mode
+npm run test:cov         # With coverage
 ```
 
-### Production Deployment (Using Enhanced Deploy Script)
+**Test suites:**
+- `analytics.service.spec.ts` — 12 tests
+- `dashboard.service.spec.ts` — 7 tests
+- `subscription.service.spec.ts` — 20 tests
+
+### Frontend (Playwright)
+
 ```bash
-cd deploy
-./deploy.sh                          # Full deployment (default)
-./deploy.sh --service frontend       # Frontend only
-./deploy.sh --service backend        # Backend + database
-./deploy.sh --service db             # Database only
-
-# With additional options
-./deploy.sh --service frontend --build    # Force rebuild
-./deploy.sh --service backend -e staging  # Deploy to staging
-./deploy.sh --service frontend -l         # Show logs after deploy
+cd frontend-next
+npx playwright test             # Headless
+npx playwright test --headed    # Visible browser
+npx playwright test --ui        # UI mode
 ```
 
-### Production Deployment (Using app-deploy Infrastructure)
-For Oracle Cloud deployment using the app-deploy infrastructure:
+**Test files:**
+- `auth.spec.ts` — Login, register, form validation
+- `dashboard.spec.ts` — Stats cards, charts, navigation
+- `analytics.spec.ts` — Spending breakdown, trends
+- `subscriptions.spec.ts` — List, filter, CRUD flow
 
-1. Provision infrastructure using app-deploy's Terraform
-2. SSH to instance and run setup script
-3. Configure environment variables in `/etc/appdeploy/app.production.env`
-4. Deploy using the enhanced deploy script:
-   ```bash
-   sudo ./deploy.sh --service frontend   # Frontend only
-   sudo ./deploy.sh --service backend    # Backend + database
-   sudo ./deploy.sh                      # Full deployment
-   ```
+## Deployment
 
-## Deployment Profiles
+### Docker Compose (Production)
 
-The deployment system supports three profiles:
-- **frontend**: Deploys only the frontend (Next.js) application
-- **backend**: Deploys the backend (NestJS) API and database
-- **db**: Deploys only the database service
-
-This enables independent frontend deployment without impacting the production database.
-
-## Project Structure
-
+```bash
+docker compose build
+docker compose up -d
 ```
-backend-nest/
-├── src/
-│   ├── modules/
-│   │   ├── auth/
-│   │   ├── subscription/
-│   │   ├── analytics/
-│   │   ├── billing/
-│   │   ├── detection/
-│   │   └── reminder/
-│   └── prisma/
-│       └── schema.prisma
 
-frontend-next/
-├── src/
-│   ├── app/
-│   │   ├── login/
-│   │   ├── register/
-│   │   ├── dashboard/
-│   │   ├── subscriptions/
-│   │   └── analytics/
-│   ├── components/ui/
-│   └── lib/
+Three services: `backend`, `frontend`, `db` (PostgreSQL).
 
-deploy/
-├── deploy.sh             # Enhanced deployment script with --service option
-├── Dockerfile            # Multi-stage build for frontend/backend
-├── docker-compose.yml    # Profile-based service deployment
-├── nginx.conf            # Custom routing for Subscription-Manager
-├── .env                  # Environment variables template
-├── scripts/              # Supporting deployment scripts
-└── systemd/              # Systemd service templates
-```
+### Environment Variables
+
+| Variable              | Description              | Default                                    |
+| --------------------- | ------------------------ | ------------------------------------------ |
+| `DATABASE_URL`        | PostgreSQL connection    | `postgresql://subscription:changeme@db:5432/subscription_manager` |
+| `JWT_SECRET`          | JWT signing secret       | *required*                                 |
+| `NEXT_PUBLIC_API_URL` | API URL for frontend     | `http://localhost:3001/api/v1`             |
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT
+[MIT](LICENSE)

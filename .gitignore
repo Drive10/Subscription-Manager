@@ -15,4 +15,8 @@ prisma/*.db-journal
 frontend-next/.next/
 frontend-next/node_modules/
 playwright-report/
-test-results/.idea/
+test-results/
+.idea/
+*.tsbuildinfo
+backend-nest/dist/
+backend-nest/.eslintcache
