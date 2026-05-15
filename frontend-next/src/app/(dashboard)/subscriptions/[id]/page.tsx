@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,8 +13,7 @@ import {
 import { ArrowLeft, Save } from "lucide-react";
 import type { Subscription } from "@/lib/types";
 
-export default function EditSubscriptionPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
+export default function EditSubscriptionPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -30,12 +29,12 @@ export default function EditSubscriptionPage({ params }: { params: Promise<{ id:
 
   useEffect(() => {
     fetchSubscription();
-  }, [resolvedParams.id]);
+  }, [params.id]);
 
   const fetchSubscription = async () => {
     try {
       const data = await api.getSubscriptions();
-      const sub = data.find((s: Subscription) => s.id === resolvedParams.id);
+      const sub = data.find((s: Subscription) => s.id === params.id);
       if (sub) {
         setSubscription(sub);
         setFormData({
@@ -57,7 +56,7 @@ export default function EditSubscriptionPage({ params }: { params: Promise<{ id:
     e.preventDefault();
     setSaving(true);
     try {
-      await api.updateSubscription(resolvedParams.id, {
+      await api.updateSubscription(params.id, {
         name: formData.name,
         amount: parseFloat(formData.amount),
         billingCycle: formData.billingCycle,

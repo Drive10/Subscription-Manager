@@ -15,4 +15,4 @@ prisma/*.db-journal
 frontend-next/.next/
 frontend-next/node_modules/
 playwright-report/
-test-results/
+test-results/.idea/

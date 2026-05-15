@@ -124,6 +124,9 @@ const request = async <T>(
     if (newToken) {
       headers.Authorization = `Bearer ${newToken}`;
       const retryRes = await fetch(url, { ...options, headers });
+      if (retryRes.status === 204) {
+        return undefined as T;
+      }
       if (!retryRes.ok) {
         const errData = await retryRes.json().catch(() => ({}));
         throw new ApiError(
@@ -133,6 +136,10 @@ const request = async <T>(
       }
       return extractData<T>(await retryRes.json());
     }
+  }
+
+  if (res.status === 204) {
+    return undefined as T;
   }
 
   if (!res.ok) {
@@ -203,7 +210,7 @@ export const api = {
   // Analytics
   getAnalytics: () => request<unknown>("/analytics/monthly-trend"),
 
-  getCategoryBreakdown: () => request<unknown>("/analytics/category-breakdown"),
+  getCategoryBreakdown: () => request<unknown>("/analytics/category-wise"),
 
   getStats: () => request<DashboardData>("/dashboard"),
 

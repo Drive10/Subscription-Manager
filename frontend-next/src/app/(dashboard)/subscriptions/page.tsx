@@ -56,7 +56,7 @@ export default function SubscriptionsPage() {
       } else {
         await api.resumeSubscription(id);
       }
-      fetchSubscriptions();
+      await fetchSubscriptions();
     } catch (error) {
       console.error("Failed to update subscription:", error);
     }
@@ -67,7 +67,7 @@ export default function SubscriptionsPage() {
     if (!confirm("Are you sure you want to delete this subscription?")) return;
     try {
       await api.deleteSubscription(id);
-      fetchSubscriptions();
+      await fetchSubscriptions();
     } catch (error) {
       console.error("Failed to delete subscription:", error);
     }

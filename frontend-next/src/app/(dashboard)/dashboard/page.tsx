@@ -44,7 +44,7 @@ export default function DashboardPage() {
       setMonthlySpending(analytics as { month: string; amount: number }[]);
       setCategorySpending((categories as any[]).map((c: any, i: number) => ({
         category: c.category || "Other",
-        amount: c.amount || 0,
+        amount: c._sum?.amount || c.amount || 0,
         color: COLORS[i % COLORS.length],
       })));
     } catch (error) {

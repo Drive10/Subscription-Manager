@@ -30,11 +30,16 @@ export class AnalyticsService {
         userId,
         status: "active",
       },
+      select: {
+        amount: true,
+        billingCycle: true,
+        createdAt: true,
+      },
     });
 
     const monthlyData: Record<string, number> = {};
     const now = new Date();
-    
+
     for (let i = months - 1; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthKey = date.toISOString().substring(0, 7);
@@ -42,18 +47,22 @@ export class AnalyticsService {
     }
 
     subscriptions.forEach((sub) => {
-      const monthlyAmount = sub.billingCycle === "yearly" 
-        ? Math.round(sub.amount / 12) 
+      const monthlyAmount = sub.billingCycle === "yearly"
+        ? Math.round(sub.amount / 12)
         : sub.amount;
-      
+
       Object.keys(monthlyData).forEach((month) => {
-        monthlyData[month] += monthlyAmount;
+        const [yearStr, monthStr] = month.split("-");
+        const nextMonth = new Date(parseInt(yearStr), parseInt(monthStr), 1);
+        if (sub.createdAt < nextMonth) {
+          monthlyData[month] += monthlyAmount;
+        }
       });
     });
 
     return Object.entries(monthlyData).map(([month, amount]) => ({
-      month: month,
-      amount: amount,
+      month,
+      amount,
     }));
   }
 }

@@ -13,7 +13,7 @@ export class DashboardService {
       upcomingRenewals,
       topExpensiveSubscriptions,
     ] = await Promise.all([
-      this.prisma.subscription.count({ where: { userId } }),
+      this.prisma.subscription.count({ where: { userId, status: "active" } }),
       this.getTotalMonthlySpending(userId),
       this.getTotalYearlySpending(userId),
       this.getUpcomingRenewals(userId),
